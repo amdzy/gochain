@@ -1,4 +1,4 @@
-package main
+package blockchain
 
 type Blockchain struct {
 	tip []byte
@@ -44,10 +44,20 @@ func (bc *Blockchain) Iterator() *BlockchainIterator {
 	return bci
 }
 
-func NewBlockchain(db *DB) (*Blockchain, error) {
+func (bc *Blockchain) CloseDB() {
+	bc.db.Close()
+}
+
+func NewBlockchain() (*Blockchain, error) {
+	db, err := InitDB()
+	if err != nil {
+		return nil, err
+	}
+
 	tip, err := db.GetTip()
 	if err != nil {
 		return nil, err
 	}
+
 	return &Blockchain{db: db, tip: tip}, nil
 }

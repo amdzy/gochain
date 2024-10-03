@@ -1,6 +1,7 @@
-package main
+package blockchain
 
 import (
+	"amdzy/gochain/utils"
 	"bytes"
 	"crypto/sha256"
 	"fmt"
@@ -20,9 +21,9 @@ func (pow *ProofOfWork) PrepareDate(nonce int) []byte {
 	data := bytes.Join([][]byte{
 		pow.block.PrevBlockHash,
 		pow.block.Data,
-		IntToHex(pow.block.Timestamp),
-		IntToHex(targetBits),
-		IntToHex(int64(nonce)),
+		utils.IntToHex(pow.block.Timestamp),
+		utils.IntToHex(targetBits),
+		utils.IntToHex(int64(nonce)),
 	}, []byte{})
 
 	return data
