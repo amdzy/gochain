@@ -2,6 +2,8 @@ package main
 
 import (
 	"time"
+
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type Block struct {
@@ -10,6 +12,19 @@ type Block struct {
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
+}
+
+func (block *Block) Serialize() ([]byte, error) {
+	b, err := msgpack.Marshal(block)
+
+	return b, err
+}
+
+func DeserializeBlock(b []byte) (*Block, error) {
+	var block Block
+	err := msgpack.Unmarshal(b, &block)
+
+	return &block, err
 }
 
 func NewBlock(data string, prevHash []byte) *Block {
