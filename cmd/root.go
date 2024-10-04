@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
 )
+
+var address string
 
 var rootCmd = &cobra.Command{
 	Use:     "gochain",
@@ -13,16 +14,35 @@ var rootCmd = &cobra.Command{
 	Long:    `GoChain is a demo blockchain built for learning purposes`,
 	Version: "0.0.1",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Got Called")
+		cmd.Help()
 	},
 }
 
 func init() {
+	cobra.EnableCommandSorting = false
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+
 	rootCmd.AddCommand(printChainCmd)
 
 	addBlockCmd.Flags().StringVarP(&newBlockData, "data", "d", "", "The new block data")
 	cobra.MarkFlagRequired(addBlockCmd.Flags(), "data")
 	rootCmd.AddCommand(addBlockCmd)
+
+	createBlockChainCmd.Flags().StringVarP(&address, "address", "a", "", "The address to send genesis block reward to")
+	cobra.MarkFlagRequired(createBlockChainCmd.Flags(), "address")
+	rootCmd.AddCommand(createBlockChainCmd)
+
+	getBalanceCmd.Flags().StringVarP(&address, "address", "a", "", "The address to send genesis block reward to")
+	cobra.MarkFlagRequired(getBalanceCmd.Flags(), "address")
+	rootCmd.AddCommand(getBalanceCmd)
+
+	sendCmd.Flags().StringVarP(&sendFrom, "from", "f", "", "The address to of the user sending")
+	sendCmd.Flags().StringVarP(&sendTo, "to", "t", "", "The address to of the user receiving")
+	sendCmd.Flags().IntVarP(&sendAmount, "amount", "a", 0, "The amount to send")
+	cobra.MarkFlagRequired(sendCmd.Flags(), "from")
+	cobra.MarkFlagRequired(sendCmd.Flags(), "to")
+	cobra.MarkFlagRequired(sendCmd.Flags(), "amount")
+	rootCmd.AddCommand(sendCmd)
 }
 
 func Execute() {
