@@ -1,17 +1,21 @@
 package blockchain
 
+import (
+	"amdzy/gochain/pkg/transactions"
+)
+
 type Blockchain struct {
-	tip []byte
 	db  *DB
+	tip []byte
 }
 
-func (bc *Blockchain) AddBlock(data string) error {
+func (bc *Blockchain) MineBlock(transactions []*transactions.Transaction) error {
 	tip, err := bc.db.GetTip()
 	if err != nil {
 		return err
 	}
 
-	block := NewBlock(data, tip)
+	block := NewBlock(transactions, tip)
 	err = bc.db.AddBlock(block)
 	if err != nil {
 		return err
@@ -20,22 +24,6 @@ func (bc *Blockchain) AddBlock(data string) error {
 	bc.tip = block.Hash
 
 	return nil
-}
-
-type BlockchainIterator struct {
-	currentHash []byte
-	db          *DB
-}
-
-func (i *BlockchainIterator) Next() (*Block, error) {
-	block, err := i.db.GetBlock(i.currentHash)
-	if err != nil {
-		return nil, err
-	}
-
-	i.currentHash = block.PrevBlockHash
-
-	return block, nil
 }
 
 func (bc *Blockchain) Iterator() *BlockchainIterator {
@@ -49,7 +37,7 @@ func (bc *Blockchain) CloseDB() {
 }
 
 func NewBlockchain() (*Blockchain, error) {
-	db, err := InitDB()
+	db, err := ConnectDB()
 	if err != nil {
 		return nil, err
 	}
@@ -59,5 +47,19 @@ func NewBlockchain() (*Blockchain, error) {
 		return nil, err
 	}
 
-	return &Blockchain{db: db, tip: tip}, nil
+	return &Blockchain{db, tip}, nil
+}
+
+func CreateBlockChain(address string) (*Blockchain, error) {
+	db, err := InitDB(address)
+	if err != nil {
+		return nil, err
+	}
+
+	tip, err := db.GetTip()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Blockchain{db, tip}, nil
 }

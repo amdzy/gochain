@@ -1,6 +1,9 @@
 package blockchain
 
 import (
+	"amdzy/gochain/pkg/transactions"
+	"bytes"
+	"crypto/sha256"
 	"time"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -8,7 +11,7 @@ import (
 
 type Block struct {
 	Timestamp     int64
-	Data          []byte
+	Transactions  []*transactions.Transaction
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
@@ -20,6 +23,18 @@ func (block *Block) Serialize() ([]byte, error) {
 	return b, err
 }
 
+func (block *Block) HashTransactions() []byte {
+	var hashes [][]byte
+
+	for _, tx := range block.Transactions {
+		hashes = append(hashes, tx.ID)
+	}
+
+	hash := sha256.Sum256(bytes.Join(hashes, []byte{}))
+
+	return hash[:]
+}
+
 func DeserializeBlock(b []byte) (*Block, error) {
 	var block Block
 	err := msgpack.Unmarshal(b, &block)
@@ -27,9 +42,9 @@ func DeserializeBlock(b []byte) (*Block, error) {
 	return &block, err
 }
 
-func NewBlock(data string, prevHash []byte) *Block {
+func NewBlock(transactions []*transactions.Transaction, prevHash []byte) *Block {
 	block := &Block{
-		Data:          []byte(data),
+		Transactions:  transactions,
 		PrevBlockHash: prevHash,
 		Timestamp:     time.Now().UTC().Unix(),
 	}
@@ -43,6 +58,6 @@ func NewBlock(data string, prevHash []byte) *Block {
 	return block
 }
 
-func NewGenesisBlock() *Block {
-	return NewBlock("Genesis Block", []byte{})
+func NewGenesisBlock(coinbase *transactions.Transaction) *Block {
+	return NewBlock([]*transactions.Transaction{coinbase}, []byte{})
 }

@@ -1,6 +1,8 @@
 package blockchain
 
 import (
+	"amdzy/gochain/pkg/transactions"
+	"fmt"
 	"log"
 
 	bolt "go.etcd.io/bbolt"
@@ -74,7 +76,52 @@ func (db *DB) Close() {
 	db.db.Close()
 }
 
-func InitDB() (*DB, error) {
+func InitDB(address string) (*DB, error) {
+	db, err := bolt.Open("blockchain.db", 0600, nil)
+	if err != nil {
+		log.Fatal("failed to connect to db")
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+
+		if b != nil {
+			return fmt.Errorf("blockchain already exists")
+		}
+
+		coinbaseTx, err := transactions.NewCoinbaseTX(address, "")
+		if err != nil {
+			return err
+		}
+
+		genesis := NewGenesisBlock(coinbaseTx)
+		b, err = tx.CreateBucket([]byte(blocksBucket))
+		if err != nil {
+			return err
+		}
+
+		genesisBytes, err := genesis.Serialize()
+		if err != nil {
+			return err
+		}
+
+		err = b.Put(genesis.Hash, genesisBytes)
+		if err != nil {
+			return err
+		}
+
+		err = b.Put([]byte("l"), genesis.Hash)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return &DB{db: db}, err
+}
+
+func ConnectDB() (*DB, error) {
 	db, err := bolt.Open("blockchain.db", 0600, nil)
 	if err != nil {
 		log.Fatal("failed to connect to db")
@@ -84,26 +131,7 @@ func InitDB() (*DB, error) {
 		b := tx.Bucket([]byte(blocksBucket))
 
 		if b == nil {
-			genesis := NewGenesisBlock()
-			b, err := tx.CreateBucket([]byte(blocksBucket))
-			if err != nil {
-				return err
-			}
-
-			genesisBytes, err := genesis.Serialize()
-			if err != nil {
-				return err
-			}
-
-			err = b.Put(genesis.Hash, genesisBytes)
-			if err != nil {
-				return err
-			}
-
-			err = b.Put([]byte("l"), genesis.Hash)
-			if err != nil {
-				return err
-			}
+			return fmt.Errorf("no existing blockchain found. Create one first")
 		}
 
 		return nil
