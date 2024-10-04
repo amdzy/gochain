@@ -15,7 +15,7 @@ var printChainCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		bc, err := blockchain.NewBlockchain()
 		if err != nil {
-			log.Fatal("failed to init blockchain")
+			log.Fatal(err)
 		}
 		defer bc.CloseDB()
 
@@ -28,7 +28,9 @@ var printChainCmd = &cobra.Command{
 			}
 
 			fmt.Printf("Prev. hash: %x\n", block.PrevBlockHash)
-			fmt.Printf("Data: %s\n", block.Data)
+			for _, tx := range block.Transactions {
+				fmt.Printf("Transaction: %x\n", tx.ID)
+			}
 			fmt.Printf("Hash: %x\n", block.Hash)
 			pow := blockchain.NewProofOfWork(block)
 			fmt.Printf("Valid: %t\n", pow.Validate())

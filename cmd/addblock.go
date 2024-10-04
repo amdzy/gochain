@@ -19,9 +19,9 @@ var addBlockCmd = &cobra.Command{
 		}
 		defer bc.CloseDB()
 
-		err = bc.AddBlock(newBlockData)
-		if err != nil {
-			log.Fatal("failed to add block")
-		}
+		// err = bc.AddBlock(newBlockData)
+		// if err != nil {
+		// 	log.Fatal("failed to add block")
+		// }
 	},
 }
