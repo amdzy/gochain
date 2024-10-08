@@ -17,19 +17,24 @@ type ProofOfWork struct {
 	target *big.Int
 }
 
-func (pow *ProofOfWork) PrepareDate(nonce int) []byte {
+func (pow *ProofOfWork) PrepareDate(nonce int) ([]byte, error) {
+	txHash, err := pow.block.HashTransactions()
+	if err != nil {
+		return nil, err
+	}
+
 	data := bytes.Join([][]byte{
 		pow.block.PrevBlockHash,
-		pow.block.HashTransactions(),
+		txHash,
 		utils.IntToHex(pow.block.Timestamp),
 		utils.IntToHex(targetBits),
 		utils.IntToHex(int64(nonce)),
 	}, []byte{})
 
-	return data
+	return data, nil
 }
 
-func (pow *ProofOfWork) Run() (int, []byte) {
+func (pow *ProofOfWork) Run() (int, []byte, error) {
 	var hashInt big.Int
 	var hash [32]byte
 	nonce := 0
@@ -37,7 +42,10 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	fmt.Printf("Mining a new block\n")
 
 	for nonce < maxNonce {
-		data := pow.PrepareDate(nonce)
+		data, err := pow.PrepareDate(nonce)
+		if err != nil {
+			return 0, nil, err
+		}
 		hash = sha256.Sum256(data)
 
 		fmt.Printf("\r%x", hash)
@@ -52,17 +60,20 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	}
 	fmt.Print("\n\n")
 
-	return nonce, hash[:]
+	return nonce, hash[:], nil
 }
 
-func (pow *ProofOfWork) Validate() bool {
+func (pow *ProofOfWork) Validate() (bool, error) {
 	var hashInt big.Int
 
-	data := pow.PrepareDate(pow.block.Nonce)
+	data, err := pow.PrepareDate(pow.block.Nonce)
+	if err != nil {
+		return false, err
+	}
 	hash := sha256.Sum256(data)
 	hashInt.SetBytes(hash[:])
 
-	return hashInt.Cmp(pow.target) == -1
+	return hashInt.Cmp(pow.target) == -1, nil
 }
 
 func NewProofOfWork(b *Block) *ProofOfWork {

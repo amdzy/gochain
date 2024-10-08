@@ -94,7 +94,11 @@ func InitDB(address string) (*DB, error) {
 			return err
 		}
 
-		genesis := NewGenesisBlock(coinbaseTx)
+		genesis, err := NewGenesisBlock(coinbaseTx)
+		if err != nil {
+			return err
+		}
+
 		b, err = tx.CreateBucket([]byte(blocksBucket))
 		if err != nil {
 			return err
@@ -127,7 +131,7 @@ func ConnectDB() (*DB, error) {
 		log.Fatal("failed to connect to db")
 	}
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 
 		if b == nil {

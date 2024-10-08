@@ -1,11 +1,22 @@
 package transactions
 
+import (
+	"amdzy/gochain/pkg/wallet"
+	"bytes"
+)
+
 type TXInput struct {
 	Txid      []byte
 	Vout      int
-	ScriptSig string
+	Signature []byte
+	PubKey    []byte
 }
 
-func (in *TXInput) CanUnlockOutputWith(unlockingData string) bool {
-	return in.ScriptSig == unlockingData
+func (in *TXInput) UsesKey(pubKeyHash []byte) bool {
+	lockingHash, err := wallet.HashPubKey(in.PubKey)
+	if err != nil {
+		return false
+	}
+
+	return bytes.Equal(lockingHash, pubKeyHash)
 }

@@ -33,7 +33,11 @@ var printChainCmd = &cobra.Command{
 			}
 			fmt.Printf("Hash: %x\n", block.Hash)
 			pow := blockchain.NewProofOfWork(block)
-			fmt.Printf("Valid: %t\n", pow.Validate())
+			validPow, _ := pow.Validate()
+			fmt.Printf("Valid: %t\n", validPow)
+			for _, tx := range block.Transactions {
+				fmt.Println(tx)
+			}
 			fmt.Println()
 
 			if len(block.PrevBlockHash) == 0 {

@@ -43,6 +43,8 @@ func init() {
 	cobra.MarkFlagRequired(sendCmd.Flags(), "to")
 	cobra.MarkFlagRequired(sendCmd.Flags(), "amount")
 	rootCmd.AddCommand(sendCmd)
+
+	rootCmd.AddCommand(createWalletCmd)
 }
 
 func Execute() {
