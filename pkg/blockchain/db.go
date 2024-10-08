@@ -11,13 +11,13 @@ import (
 const blocksBucket = "blocks"
 
 type DB struct {
-	db *bolt.DB
+	Db *bolt.DB
 }
 
 func (db *DB) GetTip() ([]byte, error) {
 	var tip []byte
 
-	err := db.db.View(func(tx *bolt.Tx) error {
+	err := db.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 
 		tip = b.Get([]byte("l"))
@@ -29,7 +29,7 @@ func (db *DB) GetTip() ([]byte, error) {
 }
 
 func (db *DB) AddBlock(block *Block) error {
-	err := db.db.Update(func(tx *bolt.Tx) error {
+	err := db.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 
 		blockBytes, err := block.Serialize()
@@ -56,7 +56,7 @@ func (db *DB) AddBlock(block *Block) error {
 func (db *DB) GetBlock(hash []byte) (*Block, error) {
 	var block *Block
 
-	err := db.db.View(func(tx *bolt.Tx) error {
+	err := db.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		encodedBlock := b.Get(hash)
 
@@ -73,7 +73,7 @@ func (db *DB) GetBlock(hash []byte) (*Block, error) {
 }
 
 func (db *DB) Close() {
-	db.db.Close()
+	db.Db.Close()
 }
 
 func InitDB(address string) (*DB, error) {
@@ -122,7 +122,7 @@ func InitDB(address string) (*DB, error) {
 		return nil
 	})
 
-	return &DB{db: db}, err
+	return &DB{Db: db}, err
 }
 
 func ConnectDB() (*DB, error) {
@@ -141,5 +141,5 @@ func ConnectDB() (*DB, error) {
 		return nil
 	})
 
-	return &DB{db: db}, err
+	return &DB{Db: db}, err
 }

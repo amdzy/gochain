@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"amdzy/gochain/pkg/blockchain"
+	"amdzy/gochain/pkg/utxo"
 	"fmt"
 	"log"
 
@@ -18,6 +19,9 @@ var createBlockChainCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		defer bc.CloseDB()
+
+		UTXOSet := utxo.UTXOSet{Blockchain: bc}
+		UTXOSet.ReIndex()
 
 		fmt.Println("Done!")
 	},

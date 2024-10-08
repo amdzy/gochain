@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"amdzy/gochain/pkg/blockchain"
+	"amdzy/gochain/pkg/utxo"
 	"amdzy/gochain/utils"
 	"fmt"
 	"log"
@@ -19,11 +20,15 @@ var getBalanceCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		defer bc.CloseDB()
+		UTXOSet := utxo.UTXOSet{Blockchain: bc}
 
 		balance := 0
 		pubKeyHash := utils.Base58Decode([]byte(address))
 		pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4]
-		UTXOs := bc.FindUTXO(pubKeyHash)
+		UTXOs, err := UTXOSet.FindUTXO(pubKeyHash)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		for _, out := range UTXOs {
 			balance += out.Value

@@ -180,7 +180,13 @@ func (tx Transaction) String() string {
 
 func NewCoinbaseTX(to, data string) (*Transaction, error) {
 	if data == "" {
-		data = fmt.Sprintf("Reward to '%s'", to)
+		randData := make([]byte, 20)
+		_, err := rand.Read(randData)
+		if err != nil {
+			return nil, err
+		}
+
+		data = fmt.Sprintf("%x", randData)
 	}
 
 	txin := TXInput{[]byte{}, -1, nil, []byte(data)}

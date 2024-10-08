@@ -3,6 +3,8 @@ package transactions
 import (
 	"amdzy/gochain/utils"
 	"bytes"
+
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type TXOutput struct {
@@ -25,4 +27,23 @@ func NewTXOutput(value int, address string) *TXOutput {
 	txo.Lock([]byte(address))
 
 	return txo
+}
+
+type TXOutputs struct {
+	Outputs []TXOutput
+}
+
+func (outs TXOutputs) Serialize() ([]byte, error) {
+	return msgpack.Marshal(outs)
+}
+
+func DeserializeOutputs(data []byte) (TXOutputs, error) {
+	var outputs TXOutputs
+
+	err := msgpack.Unmarshal(data, &outputs)
+	if err != nil {
+		return TXOutputs{}, err
+	}
+
+	return outputs, nil
 }
