@@ -196,3 +196,14 @@ func NewCoinbaseTX(to, data string) (*Transaction, error) {
 
 	return &tx, err
 }
+
+func DeserializeTransaction(data []byte) (Transaction, error) {
+	var transaction Transaction
+
+	err := msgpack.Unmarshal(data, &transaction)
+	if err != nil {
+		return Transaction{}, err
+	}
+
+	return transaction, nil
+}

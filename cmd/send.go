@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"amdzy/gochain/pkg/blockchain"
-	"amdzy/gochain/pkg/transactions"
+	"amdzy/gochain/pkg/server"
 	"amdzy/gochain/pkg/utxo"
+	"amdzy/gochain/pkg/wallet"
 	"fmt"
 	"log"
 	"os"
@@ -33,25 +34,22 @@ var sendCmd = &cobra.Command{
 		UTXOSet := utxo.UTXOSet{Blockchain: bc}
 		defer bc.CloseDB()
 
-		tx, err := utxo.NewUTXOTransaction(sendFrom, sendTo, sendAmount, &UTXOSet)
+		wallets, err := wallet.NewWallets()
+		if err != nil {
+			log.Panic(err)
+		}
+
+		wallet, err := wallets.GetWallet(sendFrom)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		tx, err := utxo.NewUTXOTransaction(&wallet, sendTo, sendAmount, &UTXOSet)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		coinbaseTx, err := transactions.NewCoinbaseTX(sendFrom, "")
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		block, err := bc.MineBlock([]*transactions.Transaction{tx, coinbaseTx})
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = UTXOSet.Update(block)
-		if err != nil {
-			log.Fatal(err)
-		}
+		server.SendTx(server.KnownNodes[0], tx)
 
 		fmt.Println("Success!")
 	},

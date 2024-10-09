@@ -5,7 +5,7 @@ import (
 	"amdzy/gochain/pkg/transactions"
 	"amdzy/gochain/pkg/wallet"
 	"encoding/hex"
-	"fmt"
+	"errors"
 	"log"
 
 	bolt "go.etcd.io/bbolt"
@@ -218,23 +218,9 @@ func (u UTXOSet) Update(block *blockchain.Block) error {
 	return err
 }
 
-func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) (*transactions.Transaction, error) {
+func NewUTXOTransaction(ws *wallet.Wallet, to string, amount int, UTXOSet *UTXOSet) (*transactions.Transaction, error) {
 	var inputs []transactions.TXInput
 	var outputs []transactions.TXOutput
-
-	if from == to {
-		return nil, fmt.Errorf("you cannot send coins to yourself")
-	}
-
-	wallets, err := wallet.NewWallets()
-	if err != nil {
-		return nil, err
-	}
-
-	ws, err := wallets.GetWallet(from)
-	if err != nil {
-		return nil, err
-	}
 
 	pubKeyHash, err := wallet.HashPubKey(ws.PublicKey)
 	if err != nil {
@@ -247,10 +233,9 @@ func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) (*transac
 	}
 
 	if acc < amount {
-		return nil, fmt.Errorf("not enough funds")
+		return nil, errors.New("not enough funds")
 	}
 
-	// Build a list of inputs
 	for txid, outs := range validOutputs {
 		txID, err := hex.DecodeString(txid)
 		if err != nil {
@@ -264,17 +249,21 @@ func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) (*transac
 	}
 
 	// Build a list of outputs
+	wsAddr, err := ws.GetAddress()
+	if err != nil {
+		return nil, err
+	}
+	from := string(wsAddr)
 	outputs = append(outputs, *transactions.NewTXOutput(amount, to))
 	if acc > amount {
 		outputs = append(outputs, *transactions.NewTXOutput(acc-amount, from)) // a change
 	}
 
 	tx := transactions.Transaction{ID: nil, Vin: inputs, Vout: outputs}
-	txHash, err := tx.Hash()
+	tx.ID, err = tx.Hash()
 	if err != nil {
 		return nil, err
 	}
-	tx.ID = txHash
 	UTXOSet.Blockchain.SignTransaction(&tx, ws.PrivateKey)
 
 	return &tx, nil

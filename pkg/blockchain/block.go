@@ -1,9 +1,8 @@
 package blockchain
 
 import (
+	"amdzy/gochain/pkg/merkle"
 	"amdzy/gochain/pkg/transactions"
-	"bytes"
-	"crypto/sha256"
 	"time"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -15,6 +14,7 @@ type Block struct {
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
+	Height        int
 }
 
 func (block *Block) Serialize() ([]byte, error) {
@@ -24,19 +24,19 @@ func (block *Block) Serialize() ([]byte, error) {
 }
 
 func (block *Block) HashTransactions() ([]byte, error) {
-	var hashes [][]byte
+	var transactions [][]byte
 
 	for _, tx := range block.Transactions {
-		b, err := tx.Hash()
+		txSerialized, err := tx.Serialize()
 		if err != nil {
 			return nil, err
 		}
-		hashes = append(hashes, b)
+
+		transactions = append(transactions, txSerialized)
 	}
+	mTree := merkle.NewMerkleTree(transactions)
 
-	hash := sha256.Sum256(bytes.Join(hashes, []byte{}))
-
-	return hash[:], nil
+	return mTree.RootNode.Data, nil
 }
 
 func DeserializeBlock(b []byte) (*Block, error) {
@@ -46,11 +46,12 @@ func DeserializeBlock(b []byte) (*Block, error) {
 	return &block, err
 }
 
-func NewBlock(transactions []*transactions.Transaction, prevHash []byte) (*Block, error) {
+func NewBlock(transactions []*transactions.Transaction, prevHash []byte, height int) (*Block, error) {
 	block := &Block{
 		Transactions:  transactions,
 		PrevBlockHash: prevHash,
 		Timestamp:     time.Now().UTC().Unix(),
+		Height:        height,
 	}
 
 	pow := NewProofOfWork(block)
@@ -66,5 +67,5 @@ func NewBlock(transactions []*transactions.Transaction, prevHash []byte) (*Block
 }
 
 func NewGenesisBlock(coinbase *transactions.Transaction) (*Block, error) {
-	return NewBlock([]*transactions.Transaction{coinbase}, []byte{})
+	return NewBlock([]*transactions.Transaction{coinbase}, []byte{}, 0)
 }

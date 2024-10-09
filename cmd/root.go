@@ -24,10 +24,6 @@ func init() {
 
 	rootCmd.AddCommand(printChainCmd)
 
-	addBlockCmd.Flags().StringVarP(&newBlockData, "data", "d", "", "The new block data")
-	cobra.MarkFlagRequired(addBlockCmd.Flags(), "data")
-	rootCmd.AddCommand(addBlockCmd)
-
 	createBlockChainCmd.Flags().StringVarP(&address, "address", "a", "", "The address to send genesis block reward to")
 	cobra.MarkFlagRequired(createBlockChainCmd.Flags(), "address")
 	rootCmd.AddCommand(createBlockChainCmd)
@@ -45,6 +41,13 @@ func init() {
 	rootCmd.AddCommand(sendCmd)
 
 	rootCmd.AddCommand(createWalletCmd)
+
+	rootCmd.AddCommand(listAddressesCmd)
+
+	rootCmd.AddCommand(reIndexUTXoCmd)
+
+	startNodeCmd.Flags().StringVarP(&minerAddress, "miner", "a", "", "Enable mining mode and send reward to ADDRESS")
+	rootCmd.AddCommand(startNodeCmd)
 }
 
 func Execute() {

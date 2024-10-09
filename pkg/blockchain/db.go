@@ -14,18 +14,26 @@ type DB struct {
 	Db *bolt.DB
 }
 
-func (db *DB) GetTip() ([]byte, error) {
-	var tip []byte
+func (db *DB) GetLastHashAndHeight() ([]byte, int, error) {
+	var lastHash []byte
+	var lastHeight int
 
 	err := db.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
+		lastHash = b.Get([]byte("l"))
 
-		tip = b.Get([]byte("l"))
+		blockData := b.Get(lastHash)
+		block, err := DeserializeBlock(blockData)
+		if err != nil {
+			return err
+		}
+
+		lastHeight = block.Height
 
 		return nil
 	})
 
-	return tip, err
+	return lastHash, lastHeight, err
 }
 
 func (db *DB) AddBlock(block *Block) error {
