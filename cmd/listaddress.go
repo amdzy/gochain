@@ -8,20 +8,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listAddressesCmd = &cobra.Command{
-	Use:   "listaddresses",
-	Short: "List addresses",
-	Long:  "List addresses",
-	Run: func(cmd *cobra.Command, args []string) {
-		wallets, err := wallet.NewWallets()
-		if err != nil {
-			log.Fatal(err)
-		}
+func NewListAddressesCommand() *cobra.Command {
+	var listAddressesCmd = &cobra.Command{
+		Use:   "listaddresses",
+		Short: "List addresses",
+		Long:  "List addresses",
+		Run: func(cmd *cobra.Command, args []string) {
+			wallets, err := wallet.NewWallets()
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		addresses := wallets.GetAddresses()
+			addresses := wallets.GetAddresses()
 
-		for _, address := range addresses {
-			fmt.Println(address)
-		}
-	},
+			for _, address := range addresses {
+				fmt.Println(address)
+			}
+		},
+	}
+
+	return listAddressesCmd
 }
