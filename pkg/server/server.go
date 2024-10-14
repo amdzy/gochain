@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"slices"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -90,6 +91,19 @@ func requestBlocks() error {
 		}
 	}
 	return nil
+}
+
+func sendAddr(address string) error {
+	fmt.Println("Sending Addr")
+	nodes := addr{KnownNodes}
+	nodes.AddrList = append(nodes.AddrList, nodeAddress)
+	payload, err := msgpack.Marshal(nodes)
+	if err != nil {
+		return err
+	}
+	request := append(commandToBytes("addr"), payload...)
+
+	return sendData(address, request)
 }
 
 func sendBlock(addr string, b *blockchain.Block) error {
@@ -208,7 +222,10 @@ func handleAddr(request []byte) error {
 	}
 
 	KnownNodes = append(KnownNodes, payload.AddrList...)
+	slices.Sort(KnownNodes)
+	KnownNodes = slices.Compact(KnownNodes)
 	fmt.Printf("There are %d known nodes now!\n", len(KnownNodes))
+	fmt.Println(KnownNodes)
 	return requestBlocks()
 }
 
@@ -468,7 +485,14 @@ func handleVersion(request []byte, bc *blockchain.Blockchain) error {
 		KnownNodes = append(KnownNodes, payload.AddrFrom)
 	}
 
-	fmt.Println(KnownNodes)
+	for _, node := range KnownNodes {
+		if node != KnownNodes[0] {
+			err := sendAddr(node)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }
